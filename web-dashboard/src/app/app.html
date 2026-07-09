@@ -1,0 +1,1203 @@
+<!-- Layout Shell -->
+<div class="app-layout">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-section">
+        <h1 class="app-title">Brilliant Asset Command Center</h1>
+        <span class="app-subtitle">Atlas Prime Operations</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-status">
+        <span class="status-pill" [class.pill-demo]="isDemoMode">
+          {{ isDemoMode ? 'Demo Stream' : 'Live Stream' }}
+        </span>
+        <span class="status-pill" [class.good]="healthState() === 'excellent'" 
+                      [class.watch]="healthState() === 'watch'" 
+                      [class.bad]="healthState() === 'critical'">
+          State: {{ healthState() | titlecase }}
+        </span>
+        <span class="data-freshness" [class.fresh]="dataFreshnessState() === 'fresh'" 
+                            [class.stale]="dataFreshnessState() === 'stale'" 
+                            [class.expired]="dataFreshnessState() === 'expired'">
+          <span class="pulse" *ngIf="dataFreshnessState() !== 'fresh'">●</span>
+          {{ dataFreshnessText() }}
+        </span>
+        <span class="telemetry-latency" title="Telemetry Latency">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l3 3"/>
+          </svg>
+          {{ telemetryLatency }}ms
+        </span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-icon" (click)="refreshNow()" title="Refresh Now">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button class="btn btn-icon notification-bell" 
+                (click)="toggleNotificationPanel()" 
+                [class.has-unread]="unreadNotificationCount > 0"
+                title="Notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+        </button>
+        <div class="user-profile">
+          <div class="avatar">OP</div>
+          <span class="username">Operator</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <div class="main-wrapper">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="nav-section">
+        <div class="nav-label">Navigation</div>
+        <button *ngFor="let tab of tabs" 
+                class="nav-item" 
+                [class.active]="activeTab === tab.id"
+                (click)="setTab(tab.id)">
+          <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ng-container [ngSwitch]="tab.id">
+              <path *ngSwitchCase="'overview'" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <path *ngSwitchCase="'analytics'" d="M3 3v18h18M9 17V9m6 8v-4m6 4V7"/>
+              <path *ngSwitchCase="'controls'" d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+              <path *ngSwitchCase="'automation'" d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+              <path *ngSwitchCase="'activity'" d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+              <path *ngSwitchCase="'myview'" d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zM4 13a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6zM16 13a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-6z"/>
+              <path *ngSwitchCase="'notifications'" d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+              <path *ngSwitchDefault d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <circle *ngSwitchDefault cx="12" cy="12" r="3"/>
+            </ng-container>
+          </svg>
+          <span class="nav-label-text">{{ tab.label }}</span>
+          <span class="nav-badge" *ngIf="tab.id === 'notifications' && unreadNotificationCount > 0">
+            {{ unreadNotificationCount }}
+          </span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">View Mode</div>
+        <button *ngFor="let role of ['operator', 'maintenance', 'executive']" 
+                class="nav-item role-item" 
+                [class.active]="activeRole === role"
+                (click)="setRole(role)">
+          <span class="role-indicator" [class.role-operator]="role === 'operator'" 
+                                   [class.role-maintenance]="role === 'maintenance'" 
+                                   [class.role-executive]="role === 'executive'"></span>
+          <span class="nav-label-text">{{ role | titlecase }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <!-- Global Filters -->
+      <section class="filters-bar">
+        <div class="filter-group">
+          <label class="filter-label">Date Range</label>
+          <select [(ngModel)]="dateRange" class="filter-select">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Site</label>
+          <select [(ngModel)]="selectedSite" class="filter-select">
+            <option value="all">All Sites</option>
+            <option value="a">Site A</option>
+            <option value="b">Site B</option>
+            <option value="c">Site C</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Skeleton Loading Screen -->
+      <section class="tab-content" *ngIf="isLoading">
+        <div class="kpi-row">
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+          <div class="skeleton skeleton-kpi"></div>
+        </div>
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="skeleton skeleton-text"></div>
+            </div>
+            <div class="card-body">
+              <div class="status-grid">
+                <div class="skeleton skeleton-chart" *ngFor="let _ of [1,2,3,4,5,6]"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="skeleton skeleton-text"></div>
+            </div>
+            <div class="card-body">
+              <div class="skeleton skeleton-chart" *ngFor="let _ of [1,2,3]"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actionable Playbook Banner -->
+      <section class="playbook-banner" *ngIf="getActionablePlaybook()?.visible">
+        <div class="playbook-icon">⚠️</div>
+        <div class="playbook-content">
+          <strong>{{ getActionablePlaybook()?.title }}:</strong>
+          <span>Automated response recommended based on current risk level.</span>
+        </div>
+        <button class="btn btn-warning" (click)="executePlaybook()">Execute Playbook</button>
+      </section>
+
+      <!-- OVERVIEW TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'overview'">
+        <!-- KPI Cards Row -->
+        <div class="kpi-row">
+          <article class="kpi-card" (click)="drillDown('brilliance')">
+            <div class="kpi-header">
+              <h3>Brilliance Score</h3>
+              <button class="pin-btn" [class.pinned]="isPinned('brilliance')" 
+                      (click)="togglePin('brilliance'); $event.stopPropagation()" title="Pin to My View">★</button>
+            </div>
+            <p class="kpi-value">{{ brillianceScore() }}</p>
+            <div class="kpi-footer">
+              <small class="kpi-trend" [class.trend-up]="getTrendIndicator('efficiency') === 'up'" 
+                               [class.trend-down]="getTrendIndicator('efficiency') === 'down'">
+                {{ getTrendChangePercent('efficiency') }}
+              </small>
+              <small class="kpi-label">Composite Health</small>
+            </div>
+          </article>
+
+          <article class="kpi-card" (click)="drillDown('asset')">
+            <div class="kpi-header">
+              <h3>Asset Value Index</h3>
+              <button class="pin-btn" [class.pinned]="isPinned('asset')" 
+                      (click)="togglePin('asset'); $event.stopPropagation()" title="Pin to My View">★</button>
+            </div>
+            <p class="kpi-value">{{ assetValueIndex() }}</p>
+            <div class="kpi-footer">
+              <small class="kpi-label">Reliability Score</small>
+            </div>
+          </article>
+
+          <article class="kpi-card" (click)="drillDown('risk')">
+            <div class="kpi-header">
+              <h3>Predictive Risk</h3>
+              <button class="pin-btn" [class.pinned]="isPinned('risk')" 
+                      (click)="togglePin('risk'); $event.stopPropagation()" title="Pin to My View">★</button>
+            </div>
+            <p class="kpi-value" [class.status-critical]="predictiveRiskPercent() > 70" 
+                           [class.status-warning]="predictiveRiskPercent() > 50">
+              {{ predictiveRiskPercent() }}%
+            </p>
+            <div class="kpi-footer">
+              <small class="kpi-label">Incident Probability</small>
+            </div>
+            <div class="risk-actions" *ngIf="predictiveRiskPercent() > 60" (click)="$event.stopPropagation()">
+              <button class="btn btn-sm" (click)="viewIncidentReport()">View Report</button>
+              <button class="btn btn-sm btn-warning" *ngIf="predictiveRiskPercent() > 70" (click)="startMitigationProtocol()">Mitigate</button>
+            </div>
+          </article>
+
+          <article class="kpi-card" (click)="drillDown('output')">
+            <div class="kpi-header">
+              <h3>Output Power</h3>
+              <button class="pin-btn" [class.pinned]="isPinned('output')" 
+                      (click)="togglePin('output'); $event.stopPropagation()" title="Pin to My View">★</button>
+            </div>
+            <p class="kpi-value">{{ sys.output_kw | number: '1.0-0' }} <span class="kpi-unit">kW</span></p>
+            <div class="kpi-footer">
+              <small class="kpi-trend" [class.trend-up]="getTrendIndicator('output_kw') === 'up'" 
+                               [class.trend-down]="getTrendIndicator('output_kw') === 'down'">
+                {{ getTrendChangePercent('output_kw') }}
+              </small>
+              <small class="kpi-label">Generation</small>
+            </div>
+          </article>
+        </div>
+
+        <!-- System Snapshot Card -->
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>System Snapshot</h2>
+              <span class="card-badge" [class.badge-operator]="activeRole === 'operator'"
+                                   [class.badge-maintenance]="activeRole === 'maintenance'"
+                                   [class.badge-executive]="activeRole === 'executive'">
+                {{ activeRole | titlecase }}
+              </span>
+            </div>
+            <div class="card-body">
+              <!-- Operator View -->
+              <div class="status-grid" *ngIf="activeRole === 'operator'">
+                <div class="status-item">
+                  <span class="status-label">Temperature</span>
+                  <strong [class.status-excellent]="getContextualStatus('temperature', sys.temperature) === 'excellent'"
+                          [class.status-warning]="getContextualStatus('temperature', sys.temperature) === 'warning'"
+                          [class.status-critical]="getContextualStatus('temperature', sys.temperature) === 'critical'">
+                    {{ sys.temperature | number: '1.1-1' }}°F
+                    <span class="trend-indicator" [class.trend-up]="getTrendIndicator('temperature') === 'up'" 
+                                                  [class.trend-down]="getTrendIndicator('temperature') === 'down'">
+                      {{ getTrendIndicator('temperature') === 'up' ? '▲' : (getTrendIndicator('temperature') === 'down' ? '▼' : '') }}
+                    </span>
+                  </strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Grid Load</span>
+                  <strong [class.status-excellent]="getContextualStatus('grid_load', sys.grid_load) === 'excellent'"
+                          [class.status-warning]="getContextualStatus('grid_load', sys.grid_load) === 'warning'"
+                          [class.status-critical]="getContextualStatus('grid_load', sys.grid_load) === 'critical'">
+                    {{ sys.grid_load | number: '1.0-0' }}%
+                    <span class="trend-indicator" [class.trend-up]="getTrendIndicator('grid_load') === 'up'" 
+                                                  [class.trend-down]="getTrendIndicator('grid_load') === 'down'">
+                      {{ getTrendIndicator('grid_load') === 'up' ? '▲' : (getTrendIndicator('grid_load') === 'down' ? '▼' : '') }}
+                    </span>
+                  </strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Fuel Level</span>
+                  <strong>{{ sys.fuel_level | number: '1.0-0' }}%</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Pressure</span>
+                  <strong>{{ sys.pressure_psi | number: '1.0-0' }} psi</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Vibration</span>
+                  <strong>{{ sys.vibration_mm | number: '1.1-2' }} mm</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Uptime</span>
+                  <strong>{{ sys.uptime_hours | number: '1.0-0' }} h</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Efficiency</span>
+                  <strong>{{ sys.efficiency | number: '1.0-1' }}%</strong>
+                </div>
+              </div>
+
+              <!-- Maintenance View -->
+              <div class="status-grid" *ngIf="activeRole === 'maintenance'">
+                <div class="status-item">
+                  <span class="status-label">MTBF</span>
+                  <strong>{{ mtbf() }} hours</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Vibration Trend</span>
+                  <strong>{{ sys.vibration_mm | number: '1.1-2' }} mm</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Pressure Stability</span>
+                  <strong>{{ sys.pressure_psi | number: '1.0-0' }} psi</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Maintenance Completion</span>
+                  <strong>{{ maintenanceCompletion() }}%</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Pending Repairs</span>
+                  <strong>{{ maintenanceTasks.filter(t => !t.done).length }}</strong>
+                </div>
+              </div>
+
+              <!-- Executive View -->
+              <div class="status-grid" *ngIf="activeRole === 'executive'">
+                <div class="status-item">
+                  <span class="status-label">Cost per Unit</span>
+                  <strong>${{ costPerUnit() }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Site Efficiency (Avg)</span>
+                  <strong>{{ siteComparison() | avgEfficiency }}%</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Total Output</span>
+                  <strong>{{ sys.output_kw | number: '1.0-0' }} kW</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Brilliance Score</span>
+                  <strong>{{ brillianceScore() }}</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Live Recommendations Card -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Live Recommendations</h2>
+            </div>
+            <div class="card-body">
+              <ul class="recommendation-list">
+                <li *ngFor="let suggestion of recommendations; let i = index">
+                  <span class="recommendation-text">{{ suggestion }}</span>
+                  <button class="btn btn-sm btn-secondary" 
+                          (click)="openTicketModal(alertList[0])" 
+                          *ngIf="alertList[0] && alertList[0].rootCause">
+                    Create Ticket
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ANALYTICS TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'analytics'">
+        <!-- Drill-Down Detail Panel -->
+        <article class="card full-width" *ngIf="drilldownData">
+          <div class="card-header">
+            <h2>Drill-Down: {{ drilldownData.kpi | titlecase }}</h2>
+            <button class="btn btn-secondary" (click)="closeDrillDown()">Close</button>
+          </div>
+          <div class="card-body">
+            <div class="drilldown-summary">
+              <div class="drilldown-stat">
+                <span class="drilldown-label">Current</span>
+                <strong class="drilldown-value" [class.trend-up]="drilldownData.trend === 'up'" 
+                                            [class.trend-down]="drilldownData.trend === 'down'">
+                  {{ drilldownData.currentValue | number: '1.1-1' }}
+                </strong>
+              </div>
+              <div class="drilldown-stat">
+                <span class="drilldown-label">Previous</span>
+                <strong class="drilldown-value">{{ drilldownData.previousValue | number: '1.1-1' }}</strong>
+              </div>
+              <div class="drilldown-stat">
+                <span class="drilldown-label">Change</span>
+                <strong class="drilldown-value" [class.trend-up]="drilldownData.trend === 'up'" 
+                                            [class.trend-down]="drilldownData.trend === 'down'">
+                  {{ drilldownData.changePercent > 0 ? '+' : '' }}{{ drilldownData.changePercent | number: '1.1-1' }}%
+                </strong>
+              </div>
+              <div class="drilldown-stat">
+                <span class="drilldown-label">Trend</span>
+                <strong class="drilldown-value" [class.trend-up]="drilldownData.trend === 'up'" 
+                                            [class.trend-down]="drilldownData.trend === 'down'">
+                  {{ drilldownData.trend === 'up' ? '▲ Rising' : (drilldownData.trend === 'down' ? '▼ Falling' : '◆ Stable') }}
+                </strong>
+              </div>
+            </div>
+
+            <!-- Sparkline Chart -->
+            <div class="drilldown-chart" *ngIf="drilldownData.history.length > 1">
+              <h4>24-Point History</h4>
+              <div class="history-bars">
+                <div *ngFor="let point of drilldownData.history; let i = index" 
+                     class="history-bar"
+                     [style.height.%]="(point / getMaxValue(drilldownData.history)) * 100"
+                     [class.bar-up]="i > 0 && drilldownData.history[i] >= drilldownData.history[i-1]"
+                     [class.bar-down]="i > 0 && drilldownData.history[i] < drilldownData.history[i-1]"
+                     [title]="point | number: '1.1-1'">
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-Components -->
+            <div class="drilldown-section">
+              <h4>Sub-Components</h4>
+              <div class="drilldown-subcomponents">
+                <div *ngFor="let component of drilldownData.subComponents" class="subcomponent-row">
+                  <span class="subcomponent-name">{{ component.name }}</span>
+                  <span class="subcomponent-value" [class.status-excellent]="component.status === 'good'"
+                                                [class.status-warning]="component.status === 'warning'"
+                                                [class.status-critical]="component.status === 'critical'">
+                    {{ component.value | number: '1.1-1' }}
+                  </span>
+                  <span class="subcomponent-status" [class.status-good]="component.status === 'good'"
+                                                [class.status-warning]="component.status === 'warning'"
+                                                [class.status-critical]="component.status === 'critical'">
+                    {{ component.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparison Data -->
+            <div class="drilldown-section">
+              <h4>Comparison</h4>
+              <div class="drilldown-comparison">
+                <div *ngFor="let item of drilldownData.comparison" class="comparison-item">
+                  <span class="comparison-label">{{ item.label }}</span>
+                  <strong class="comparison-value">{{ item.value | number: '1.1-1' }} {{ item.unit }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card" *ngIf="!drilldownData">
+          <div class="card-header">
+            <h2>Trend Analytics</h2>
+          </div>
+          <div class="card-body">
+            <div class="chart-grid">
+              <div class="chart-card" (click)="drillDown('temperature')">
+                <header>
+                  <span>Temperature</span>
+                  <strong>{{ chartLast('temperature') | number: '1.1-1' }}°F</strong>
+                </header>
+                <svg viewBox="0 0 180 42" preserveAspectRatio="none" class="mini-chart" 
+                     [class.warning]="chartTrendClass('temperature') === 'warning'" 
+                     [class.critical]="chartTrendClass('temperature') === 'critical'">
+                  <polyline [attr.points]="chartPoints('temperature', 60, 105)"></polyline>
+                </svg>
+                <small>Avg {{ trendAverage('temperature') | number: '1.1-1' }}°F</small>
+              </div>
+              <div class="chart-card" (click)="drillDown('grid_load')">
+                <header>
+                  <span>Grid Load</span>
+                  <strong>{{ chartLast('grid_load') | number: '1.0-0' }}%</strong>
+                </header>
+                <svg viewBox="0 0 180 42" preserveAspectRatio="none" class="mini-chart" 
+                     [class.warning]="chartTrendClass('grid_load') === 'warning'" 
+                     [class.critical]="chartTrendClass('grid_load') === 'critical'">
+                  <polyline [attr.points]="chartPoints('grid_load', 30, 100)"></polyline>
+                </svg>
+                <small>Avg {{ trendAverage('grid_load') | number: '1.0-0' }}%</small>
+              </div>
+              <div class="chart-card" (click)="drillDown('efficiency')">
+                <header>
+                  <span>Efficiency</span>
+                  <strong>{{ chartLast('efficiency') | number: '1.0-1' }}%</strong>
+                </header>
+                <svg viewBox="0 0 180 42" preserveAspectRatio="none" class="mini-chart" 
+                     [class.warning]="chartTrendClass('efficiency') === 'warning'" 
+                     [class.critical]="chartTrendClass('efficiency') === 'critical'">
+                  <polyline [attr.points]="chartPoints('efficiency', 75, 100)"></polyline>
+                </svg>
+                <small>Avg {{ trendAverage('efficiency') | number: '1.0-1' }}%</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div class="card-grid">
+          <!-- What-If Analysis -->
+          <article class="card">
+            <div class="card-header">
+              <h2>What-If Analysis</h2>
+            </div>
+            <div class="card-body">
+              <p class="card-description">Simulate grid load changes and see impact on output</p>
+              <div class="control-block">
+                <label class="control-label">Adjust Grid Load (%)</label>
+                <input type="range" min="30" max="100" [(ngModel)]="whatIfGridLoad" class="control-range">
+                <span class="control-value">{{ whatIfGridLoad || sys.grid_load }}% (current: {{ sys.grid_load | number: '1.0-0' }}%)</span>
+              </div>
+              <button class="btn btn-secondary" (click)="runWhatIfSimulation()">Run Simulation</button>
+              
+              <div class="simulation-result" *ngIf="whatIfResult">
+                <h4>Simulation Results:</h4>
+                <div class="status-grid">
+                  <div class="status-item">
+                    <span class="status-label">Output Power</span>
+                    <strong class="simulation-value">{{ whatIfResult.output_kw | number: '1.0-0' }} kW</strong>
+                  </div>
+                  <div class="status-item">
+                    <span class="status-label">Efficiency</span>
+                    <strong class="simulation-value">{{ whatIfResult.efficiency | number: '1.0-1' }}%</strong>
+                  </div>
+                  <div class="status-item">
+                    <span class="status-label">Temperature</span>
+                    <strong class="simulation-value">{{ whatIfResult.temperature | number: '1.1-1' }}°F</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Process Flow Diagram -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Process Flow Diagram</h2>
+            </div>
+            <div class="card-body">
+              <div class="flow-diagram">
+                <div class="flow-node" 
+                     [class.selected]="selectedFlowNode === 'generator'"
+                     (click)="selectFlowNode('generator')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                  </svg>
+                  <span>Generator</span>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" 
+                     [class.selected]="selectedFlowNode === 'transformer'"
+                     (click)="selectFlowNode('transformer')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="3" width="12" height="18" rx="2"/>
+                    <path d="M12 7v4m-2 2h4"/>
+                  </svg>
+                  <span>Transformer</span>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" 
+                     [class.selected]="selectedFlowNode === 'grid'"
+                     (click)="selectFlowNode('grid')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  </svg>
+                  <span>Grid Interface</span>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node" 
+                     [class.selected]="selectedFlowNode === 'cooling'"
+                     (click)="selectFlowNode('cooling')">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M2 12h20"/>
+                    <circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  <span>Cooling System</span>
+                </div>
+              </div>
+              <div class="flow-info" *ngIf="selectedFlowNode">
+                <strong>Selected: {{ selectedFlowNode | titlecase }}</strong>
+                <p>Click on components to drill down into their individual metrics.</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- Signal Quality -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Signal Quality</h2>
+            </div>
+            <div class="card-body">
+              <div class="status-grid">
+                <div class="status-item">
+                  <span class="status-label">Data Points</span>
+                  <strong>{{ history.length }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Telemetry Mode</span>
+                  <strong>{{ isDemoMode ? 'Simulation' : 'Backend Stream' }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Safety Lock</span>
+                  <strong [class.status-excellent]="!sys.is_locked" [class.status-critical]="sys.is_locked">
+                    {{ sys.is_locked ? 'Engaged' : 'Disengaged' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- CONTROLS TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'controls'">
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>Operator Commands</h2>
+            </div>
+            <div class="card-body">
+              <div class="btn-grid">
+                <button class="btn btn-primary" (click)="sendCommand('boost-output')">Boost Output</button>
+                <button class="btn btn-primary" (click)="sendCommand('cooldown')">Cooldown</button>
+                <button class="btn btn-primary" (click)="sendCommand('load-shed')">Load Shed</button>
+                <button class="btn btn-primary" (click)="sendCommand('eco-mode')">Eco Mode</button>
+              </div>
+              <div class="btn-grid">
+                <button class="btn btn-secondary" (click)="toggleLock()">
+                  {{ sys.is_locked ? 'Unlock Controls' : 'Lock Controls' }}
+                </button>
+                <button class="btn btn-secondary" (click)="acknowledgeAlerts()">Acknowledge Warnings</button>
+              </div>
+              <div class="control-block">
+                <label class="control-label">Custom Action</label>
+                <div class="input-group">
+                  <input type="text" [(ngModel)]="customAction" class="control-input">
+                  <button class="btn btn-primary" (click)="sendCustomCommand()">Dispatch</button>
+                </div>
+              </div>
+              <div class="control-block">
+                <label class="control-label">Command Preset</label>
+                <div class="input-group">
+                  <select [(ngModel)]="selectedPreset" class="control-select">
+                    <option value="balanced">Balanced</option>
+                    <option value="performance">Performance Burst</option>
+                    <option value="resilient">Resilient Guard</option>
+                  </select>
+                  <button class="btn btn-secondary" (click)="applyPreset()">Apply</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Alert Stack -->
+          <article class="card">
+            <div class="card-header">
+            <h2>Alert Stack <span class="card-badge badge-alert" *ngIf="alertList.length > 0">{{ alertList.length }}</span></h2>
+            </div>
+            <div class="card-body">
+              <div class="alert" *ngFor="let alert of alertList; trackBy: trackAlertByKey" 
+                   [class.alert-warning]="alert.level === 'warning'" 
+                   [class.alert-critical]="alert.level === 'critical'"
+                   [class.alert-acknowledged]="alert.acknowledged">
+                <div class="alert-header">
+                  <strong class="alert-level">{{ alert.level | uppercase }}</strong>
+                  <span class="alert-status" *ngIf="alert.acknowledged">Acknowledged</span>
+                  <span class="alert-time">{{ alert.createdAt | date: 'shortTime' }}</span>
+                </div>
+                <p class="alert-text">{{ alert.text }}</p>
+                <div class="alert-details" *ngIf="alert.rootCause || alert.suggestedAction">
+                  <small *ngIf="alert.rootCause" class="alert-detail">
+                    <strong>Root Cause:</strong> {{ alert.rootCause }}
+                  </small>
+                  <small *ngIf="alert.suggestedAction" class="alert-detail">
+                    <strong>Action:</strong> {{ alert.suggestedAction }}
+                  </small>
+                  <small *ngIf="alert.assignedTo" class="alert-detail">
+                    <strong>Assigned:</strong> {{ alert.assignedTo }}
+                  </small>
+                </div>
+                <div class="alert-actions">
+                  <button class="btn btn-sm btn-secondary" (click)="openTicketModal(alert)" *ngIf="alert.rootCause">
+                    Create Ticket
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="viewIncidentReport()" *ngIf="alert.level === 'critical'">
+                    View Report
+                  </button>
+                  <button class="btn btn-sm" (click)="acknowledgeAlert(alert.key)" *ngIf="!alert.acknowledged">
+                    Acknowledge
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="reactivateAlert(alert.key)" *ngIf="alert.acknowledged">
+                    Reactivate
+                  </button>
+                </div>
+              </div>
+              <p class="empty-state" *ngIf="alertList.length === 0">No active alerts.</p>
+            </div>
+          </article>
+
+          <!-- Maintenance Tickets -->
+          <article class="card" *ngIf="maintenanceTickets.length > 0">
+            <div class="card-header">
+              <h2>Maintenance Tickets <span class="card-badge">{{ maintenanceTickets.length }}</span></h2>
+            </div>
+            <div class="card-body">
+              <div class="ticket" *ngFor="let ticket of maintenanceTickets.slice(0, 5)">
+                <div class="ticket-header">
+                  <strong>#{{ ticket.id }}: {{ ticket.issue }}</strong>
+                  <span class="ticket-status" [ngClass]="'ticket-' + ticket.status">{{ ticket.status | titlecase }}</span>
+                </div>
+                <div class="ticket-details">
+                  <small>Equipment: {{ ticket.equipment }} | Priority: {{ ticket.priority | titlecase }}</small>
+                  <small>Assigned: {{ ticket.assignedTo }}</small>
+                  <small>Created: {{ ticket.createdAt | date: 'short' }}</small>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <!-- Command Queue -->
+          <article class="card">
+            <div class="card-header">
+              <h2>Command Queue</h2>
+            </div>
+            <div class="card-body">
+              <div class="queue-item" *ngFor="let cmd of commandQueue">
+                <div class="queue-info">
+                  <strong>{{ cmd.action }}</strong>
+                  <small>{{ cmd.startedAt | date: 'mediumTime' }}</small>
+                </div>
+                <span class="queue-status" [ngClass]="queueStateClass(cmd.status)">{{ cmd.status }}</span>
+              </div>
+              <p class="empty-state" *ngIf="commandQueue.length === 0">No commands yet.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- AUTOMATION TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'automation'">
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>Automation Rules</h2>
+            </div>
+            <div class="card-body">
+              <div class="rule" *ngFor="let rule of automationRules">
+                <div class="rule-info">
+                  <strong>{{ rule.name }}</strong>
+                  <p>Threshold: {{ rule.threshold }} | Action: {{ rule.action }}</p>
+                </div>
+                <div class="rule-actions">
+                  <button class="btn btn-sm btn-secondary" (click)="toggleRule(rule)">
+                    {{ rule.enabled ? 'Disable' : 'Enable' }}
+                  </button>
+                  <button class="btn btn-sm" (click)="runAutomation(rule)">Run</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h2>Anomaly Detection</h2>
+            </div>
+            <div class="card-body">
+              <div class="anomaly-status" *ngIf="anomalies.length === 0">
+                <span class="status-indicator status-ok">●</span>
+                <span>No anomalies detected. System operating within normal parameters.</span>
+              </div>
+              <div *ngFor="let anomaly of anomalies" class="anomaly-item">
+                <strong>{{ anomaly.field }}</strong>
+                <p>Deviation: {{ anomaly.deviation | number: '1.1-1' }}σ ({{ anomaly.severity }})</p>
+                <small>Detected: {{ anomaly.detectedAt | date: 'shortTime' }}</small>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h2>Automation Notes</h2>
+            </div>
+            <div class="card-body">
+              <p>Rules execute as advisory checks, with human confirmation retained for mission safety.</p>
+              <p>Use thresholds to tune sensitivity and avoid false positives during transient spikes.</p>
+              <div class="maintenance-progress">
+                <div class="progress-label">
+                  <span>Maintenance Completion</span>
+                  <strong>{{ maintenanceCompletion() }}%</strong>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="maintenanceCompletion()"></div>
+                </div>
+              </div>
+              <div class="maintenance-list">
+                <label *ngFor="let task of maintenanceTasks" class="maintenance-task">
+                  <input type="checkbox" [checked]="task.done" (change)="toggleMaintenanceTask(task)">
+                  <span>{{ task.title }} ({{ task.owner }})</span>
+                </label>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ACTIVITY TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'activity'">
+        <article class="card full-width">
+          <div class="card-header">
+            <h2>Activity Timeline</h2>
+          </div>
+          <div class="card-body">
+            <!-- Natural Language Query -->
+            <div class="nlq-search">
+              <input type="text" 
+                    placeholder="Ask a question... e.g. 'What was the peak grid load?'" 
+                    [(ngModel)]="nlqQuery" 
+                    (keyup.enter)="searchNLQ()"
+                    class="nlq-input">
+              <button class="btn btn-primary" (click)="searchNLQ()">Search</button>
+              
+              <div class="nlq-results" *ngIf="showNLQResults && nlqResults.length > 0">
+                <button class="close-results-btn" (click)="showNLQResults = false">×</button>
+                
+                <div class="nlq-result-item" *ngFor="let result of nlqResults">
+                  <strong>Q:</strong> {{ result.query }}<br>
+                  <strong>A:</strong> {{ result.answer }}
+                </div>
+              </div>
+            </div>
+
+            <div class="activity-filter">
+              <label class="filter-label">Filter Activity</label>
+              <input type="text" [(ngModel)]="activityFilter" placeholder="Search events..." class="filter-input">
+            </div>
+
+            <div class="activity-timeline">
+              <div class="activity-item" *ngFor="let item of filteredActivities()">
+                <span class="activity-tag" [class.tag-system]="item.type === 'system'"
+                                         [class.tag-command]="item.type === 'command'"
+                                         [class.tag-insight]="item.type === 'insight'">
+                  {{ item.type }}
+                </span>
+                <div class="activity-content">
+                  <p>{{ item.message }}</p>
+                  <small>{{ item.createdAt | date: 'mediumTime' }}</small>
+                </div>
+              </div>
+            </div>
+            <p class="empty-state" *ngIf="filteredActivities().length === 0">No activity matches this filter.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- MY VIEW TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'myview'">
+        <article class="card full-width">
+          <div class="card-header">
+            <h2>My View Dashboard</h2>
+            <span class="card-badge">{{ pinnedWidgets.length }} widgets</span>
+          </div>
+          <div class="card-body">
+            <!-- Pinned Widgets -->
+            <div class="widgets-grid">
+              <div *ngFor="let widget of getPinnedWidgets()" class="widget-card" (click)="drillDown(widget.id)">
+                <div class="widget-header">
+                  <h3>{{ widget.label }}</h3>
+                  <button class="pin-btn pinned" (click)="togglePin(widget.id); $event.stopPropagation()" title="Remove from My View">★</button>
+                </div>
+                <div class="widget-value" 
+                     [class.status-excellent]="getWidgetStatus(widget.id) === 'excellent'"
+                     [class.status-warning]="getWidgetStatus(widget.id) === 'warning'"
+                     [class.status-critical]="getWidgetStatus(widget.id) === 'critical'">
+                  {{ getWidgetValue(widget.id) | number: '1.1-1' }} {{ getWidgetUnit(widget.id) }}
+                  <span class="trend-indicator" [class.trend-up]="getWidgetTrend(widget.id) === 'up'" 
+                                                [class.trend-down]="getWidgetTrend(widget.id) === 'down'" 
+                                                *ngIf="getWidgetTrend(widget.id) !== 'stable'">
+                    {{ getWidgetTrend(widget.id) === 'up' ? '▲' : '▼' }}
+                  </span>
+                </div>
+                <small class="widget-trend">{{ getWidgetChangePercent(widget.id) }}</small>
+              </div>
+            </div>
+
+            <!-- Available Widgets -->
+            <div class="available-widgets">
+              <h4>Available Widgets</h4>
+              <div class="widgets-list">
+                <div *ngFor="let widget of availableWidgets" class="widget-item" 
+                     [class.widget-pinned]="isPinned(widget.id)">
+                  <span class="widget-name">{{ widget.label }}</span>
+                  <span class="widget-role">{{ widget.role }}</span>
+                  <button class="btn btn-sm" 
+                          [class.btn-secondary]="!isPinned(widget.id)"
+                          (click)="togglePin(widget.id)">
+                    {{ isPinned(widget.id) ? 'Remove' : 'Pin' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- NOTIFICATIONS TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'notifications'">
+        <article class="card full-width">
+          <div class="card-header">
+            <h2>Notification Center</h2>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-secondary" (click)="markAllNotificationsRead()" *ngIf="unreadNotificationCount > 0">
+                Mark All Read
+              </button>
+              <button class="btn btn-sm btn-secondary" (click)="clearNotifications()" *ngIf="notifications.length > 0">
+                Clear All
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="notification-stats">
+              <span class="stat-item">{{ notifications.length }} total</span>
+              <span class="stat-item stat-unread">{{ unreadNotificationCount }} unread</span>
+            </div>
+
+            <div class="notifications-empty" *ngIf="notifications.length === 0">
+              <p>No notifications yet. Alerts and system events will appear here.</p>
+            </div>
+
+            <div *ngFor="let notification of notifications" class="notification-item"
+                 [class.notification-unread]="!notification.read"
+                 [class.notification-alert]="notification.type === 'alert'"
+                 [class.notification-system]="notification.type === 'system'"
+                 [class.notification-command]="notification.type === 'command'"
+                 [class.notification-insight]="notification.type === 'insight'"
+                 (click)="markNotificationRead(notification)">
+              <div class="notification-icon" [class.icon-alert]="notification.type === 'alert'"
+                                                [class.icon-system]="notification.type === 'system'"
+                                                [class.icon-command]="notification.type === 'command'"
+                                                [class.icon-insight]="notification.type === 'insight'">
+                {{ notification.type === 'alert' ? '!' : (notification.type === 'system' ? 'S' : (notification.type === 'command' ? 'C' : 'I')) }}
+              </div>
+              <div class="notification-content">
+                <strong>{{ notification.title }}</strong>
+                <p>{{ notification.message }}</p>
+                <small>{{ getTimeAgo(notification.timestamp) }}</small>
+              </div>
+              <div class="notification-indicator">
+                <span class="unread-dot" *ngIf="!notification.read">●</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- SETTINGS TAB -->
+      <section class="tab-content" *ngIf="activeTab === 'settings'">
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <h2>Polling Settings</h2>
+            </div>
+            <div class="card-body">
+              <div class="control-block">
+                <label class="control-label">Refresh Rate (ms)</label>
+                <input type="number" min="500" max="10000" [(ngModel)]="refreshRateInputMs" class="control-input">
+                <p class="control-hint">Current: {{ refreshRateMs }}ms</p>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-primary" (click)="applyRefreshRate()">Apply Interval</button>
+                <button class="btn btn-secondary" (click)="toggleAutoRefresh()">
+                  {{ autoRefresh ? 'Pause' : 'Resume' }} Auto Refresh
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h2>Runtime Status</h2>
+            </div>
+            <div class="card-body">
+              <div class="status-grid">
+                <div class="status-item">
+                  <span class="status-label">Loading</span>
+                  <strong>{{ isLoading ? 'Yes' : 'No' }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Mode</span>
+                  <strong>{{ isDemoMode ? 'Demo Fallback' : 'Live Backend' }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Auto Refresh</span>
+                  <strong>{{ autoRefresh ? 'Enabled' : 'Disabled' }}</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Version</span>
+                  <strong>2.0.0</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card" *ngIf="activeRole === 'executive'">
+            <div class="card-header">
+              <h2>Site-to-Site Comparison</h2>
+            </div>
+            <div class="card-body">
+              <div class="status-grid">
+                <div class="status-item" *ngFor="let site of siteComparison()">
+                  <span class="status-label">{{ site.site }}</span>
+                  <strong>{{ site.efficiency }}% eff | {{ site.output }} kW</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card full-width">
+            <div class="card-header">
+              <h2>Week-over-Week Comparison</h2>
+            </div>
+            <div class="card-body">
+              <div class="comparison-grid">
+                <div class="comparison-item" *ngFor="let item of ['brilliance', 'output', 'temperature', 'grid_load']">
+                  <span class="comparison-label">{{ item | titlecase }}</span>
+                  <strong class="comparison-value" [class.trend-up]="getComparison(item).change > 0" 
+                                                [class.trend-down]="getComparison(item).change < 0">
+                    {{ getComparison(item).current | number: '1.0-0' }}
+                    <span class="comparison-change">
+                      ({{ getComparison(item).change > 0 ? '+' : '' }}{{ getComparison(item).change | number: '1.1-1' }} vs last week)
+                    </span>
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-left">
+        <span class="footer-version">v2.0.0</span>
+        <span class="footer-divider">|</span>
+        <span class="footer-environment" [class.env-live]="!isDemoMode" [class.env-demo]="isDemoMode">
+          {{ isDemoMode ? 'Demo' : 'Live' }}
+        </span>
+      </div>
+      <div class="footer-center">
+        <span class="footer-status">System Operational</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-copyright">© 2026 Brilliant Asset Command Center</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Toasts -->
+<section class="toast-stack" *ngIf="toasts.length > 0">
+  <article class="toast" *ngFor="let toast of toasts" 
+           [class.toast-success]="toast.tone === 'success'" 
+           [class.toast-warning]="toast.tone === 'warning'" 
+           [class.toast-error]="toast.tone === 'error'" 
+           [class.toast-info]="toast.tone === 'info'">
+    <p>{{ toast.text }}</p>
+    <button class="toast-close" (click)="dismissToast(toast.id)">×</button>
+  </article>
+</section>
+
+<!-- Maintenance Ticket Modal -->
+<div class="modal-overlay" *ngIf="showTicketModal" (click)="closeTicketModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Create Maintenance Ticket</h3>
+    <div *ngIf="selectedAlertForTicket">
+      <div class="form-group">
+        <label>Equipment</label>
+        <input type="text" value="Atlas Prime Generator" readonly>
+      </div>
+      <div class="form-group">
+        <label>Issue</label>
+        <input type="text" [value]="selectedAlertForTicket.rootCause || selectedAlertForTicket.text" readonly>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select [(ngModel)]="selectedAlertForTicket.level">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assigned To</label>
+        <input type="text" [value]="selectedAlertForTicket.assignedTo || 'Unassigned'" readonly>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea rows="3">{{ selectedAlertForTicket.suggestedAction || 'Auto-generated from alert' }}</textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeTicketModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="createMaintenanceTicket()">Create Ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incident Report Modal -->
+<div class="modal-overlay" *ngIf="showIncidentReport" (click)="closeIncidentReport()">
+  <div class="modal modal-lg" (click)="$event.stopPropagation()">
+    <h3>Incident Report: {{ incidentReportData?.title }}</h3>
+    <p class="modal-subtitle">Generated: {{ incidentReportData?.generatedAt | date: 'medium' }}</p>
+    
+    <div class="incident-summary">
+      <div class="incident-stat">
+        <span>Risk Score</span>
+        <strong [class.status-critical]="(incidentReportData?.riskScore || 0) > 70" 
+                [class.status-warning]="(incidentReportData?.riskScore || 0) > 50">
+          {{ incidentReportData?.riskScore }}%
+        </strong>
+      </div>
+      <div class="incident-stat">
+        <span>Brilliance Score</span>
+        <strong>{{ incidentReportData?.brillianceScore }}</strong>
+      </div>
+    </div>
+    
+    <h4>Contributing Factors</h4>
+    <div class="factor-list">
+      <div *ngFor="let factor of incidentReportData?.contributingFactors" class="factor-item"
+           [class.factor-exceeded]="factor.status !== 'normal' && factor.status !== 'adequate'">
+        <div class="factor-header">
+          <strong>{{ factor.factor }}</strong>
+          <span class="factor-status" [class.status-critical]="factor.status === 'exceeded'" 
+                                [class.status-warning]="factor.status === 'low'">
+            {{ factor.status | titlecase }}
+          </span>
+        </div>
+        <div class="factor-detail">
+          Value: {{ factor.value | number: '1.1-1' }} | Threshold: {{ factor.threshold }}
+        </div>
+      </div>
+    </div>
+    
+    <h4>Recommendations</h4>
+    <ul class="recommendation-list">
+      <li *ngFor="let rec of incidentReportData?.recommendations">{{ rec }}</li>
+    </ul>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeIncidentReport()">Close</button>
+      <button class="btn btn-primary" (click)="startMitigationProtocol()">Start Mitigation Protocol</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mitigation Protocol Modal -->
+<div class="modal-overlay" *ngIf="showMitigationModal" (click)="closeMitigationModal()">
+  <div class="modal modal-lg" (click)="$event.stopPropagation()">
+    <h3>Mitigation Protocol</h3>
+    <p class="modal-warning">Follow these steps in order to stabilize the system.</p>
+    
+    <div class="mitigation-steps">
+      <div *ngFor="let step of mitigationSteps" class="mitigation-step"
+           [class.step-completed]="step.completed">
+        <div class="step-indicator" [class.step-done]="step.completed" (click)="completeMitigationStep(step)">
+          {{ step.completed ? '✓' : step.id }}
+        </div>
+        <div class="step-content">
+          <strong>Step {{ step.id }}</strong>
+          <p>{{ step.label }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeMitigationModal()">Close Protocol</button>
+      <button class="btn btn-primary" *ngIf="mitigationSteps.every(s => s.completed)" (click)="closeMitigationModal()">
+        Mark Complete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Command Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showCommandConfirmModal" (click)="closeCommandConfirmModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Confirm Command</h3>
+    <p class="modal-subtitle">Are you sure you want to execute this command?</p>
+    
+    <div class="form-group">
+      <label>Command</label>
+      <input type="text" [value]="pendingCommandAction" readonly>
+    </div>
+    
+    <div class="form-group">
+      <label>Context</label>
+      <input type="text" [value]="pendingCommandContext === 'manual' ? 'Manual (Operator)' : 'Automation'" readonly>
+    </div>
+    
+    <p class="modal-warning">This action will immediately affect system operations. Please confirm.</p>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="closeCommandConfirmModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="confirmCommand()">Execute Command</button>
+    </div>
+  </div>
